@@ -37,9 +37,10 @@ $routes->post('client/transfert', 'ClientController::storeTransfert');
 $routes->get('client/historique', 'ClientController::historique');
 
 $routes->get('operateur', 'OperateurController::index');
+$routes->get('operateur/(:num)', 'OperateurController::show/$1');
 $routes->post('operateur/operateurs', 'OperateurController::storeOperateur');
-$routes->post('operateur/prefixes', 'OperateurController::storePrefixe');
-$routes->post('operateur/types', 'OperateurController::storeTypeOperation');
-$routes->post('operateur/types/(:num)/toggle', 'OperateurController::toggleTypeOperation/$1');
-$routes->post('operateur/baremes', 'OperateurController::storeBareme');
-$routes->post('operateur/baremes/(:num)', 'OperateurController::updateBareme/$1');
+$routes->post('operateur/(:num)/prefixes', 'OperateurController::storePrefixe/$1');
+$routes->post('operateur/(:num)/types', 'OperateurController::storeTypeOperation/$1');
+$routes->post('operateur/(:num)/types/(:num)/toggle', 'OperateurController::toggleTypeOperation/$1/$2');
+$routes->post('operateur/(:num)/baremes', 'OperateurController::storeBareme/$1');
+$routes->post('operateur/(:num)/baremes/(:num)', 'OperateurController::updateBareme/$1/$2');

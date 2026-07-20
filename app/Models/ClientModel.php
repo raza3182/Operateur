@@ -85,6 +85,22 @@ class ClientModel extends Model
             ->findAll();
     }
 
+    public function getSituationComptesParOperateur(int $idOperateur): array
+    {
+        return $this->select('clients.*, COUNT(operations.idOperation) AS nombreOperations')
+            ->join('prefixes', 'prefixes.prefixe = SUBSTR(clients.telephone, 1, 3)', 'inner', false)
+            ->join(
+                'operations',
+                'operations.expediteur = clients.idClient OR operations.destinataire = clients.idClient',
+                'left',
+                false
+            )
+            ->where('prefixes.idOperateur', $idOperateur)
+            ->groupBy('clients.idClient')
+            ->orderBy('clients.nom', 'ASC')
+            ->findAll();
+    }
+
     /**
      * Crédite le solde du client (dépôt, ou réception de transfert).
      */

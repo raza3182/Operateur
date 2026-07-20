@@ -34,21 +34,37 @@ class OperationModel extends Model
             ->findAll();
     }
 
-    public function getGainsParType(): array
+    public function getGainsParType(?int $idOperateur = null): array
     {
-        return $this->select('typeOperations.nom AS typeNom, COUNT(operations.idOperation) AS nombreOperations, COALESCE(SUM(operations.frais), 0) AS totalFrais')
-            ->join('typeOperations', 'typeOperations.idTypeOperation = operations.idTypeOperation')
+        $builder = $this->select('typeOperations.nom AS typeNom, COUNT(operations.idOperation) AS nombreOperations, COALESCE(SUM(operations.frais), 0) AS totalFrais')
+            ->join('typeOperations', 'typeOperations.idTypeOperation = operations.idTypeOperation');
+
+        if ($idOperateur !== null) {
+            $builder
+                ->join('clients', 'clients.idClient = operations.expediteur', 'inner')
+                ->join('prefixes', 'prefixes.prefixe = SUBSTR(clients.telephone, 1, 3)', 'inner', false)
+                ->where('prefixes.idOperateur', $idOperateur);
+        }
+
+        return $builder
             ->whereIn('typeOperations.nom', ['RETRAIT', 'TRANSFERT'])
             ->groupBy('typeOperations.idTypeOperation')
             ->orderBy('typeOperations.nom', 'ASC')
             ->findAll();
     }
 
-    public function getTotalGains(): float
+    public function getTotalGains(?int $idOperateur = null): float
     {
-        $result = $this->select('COALESCE(SUM(frais), 0) AS totalFrais')
-            ->where('frais >', 0)
-            ->first();
+        $builder = $this->select('COALESCE(SUM(operations.frais), 0) AS totalFrais');
+
+        if ($idOperateur !== null) {
+            $builder
+                ->join('clients', 'clients.idClient = operations.expediteur', 'inner')
+                ->join('prefixes', 'prefixes.prefixe = SUBSTR(clients.telephone, 1, 3)', 'inner', false)
+                ->where('prefixes.idOperateur', $idOperateur);
+        }
+
+        $result = $builder->where('operations.frais >', 0)->first();
 
         return (float) ($result['totalFrais'] ?? 0);
     }

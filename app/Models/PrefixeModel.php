@@ -16,20 +16,27 @@ class PrefixeModel extends Model
     /**
      * Récupérer tous les préfixes avec leur opérateur
      */
-    public function getPrefixesAvecOperateur()
+    public function getPrefixesAvecOperateur(?int $idOperateur = null)
     {
-        return $this->select([
+        $builder = $this->select([
                         'prefixes.idPrefixe',
                         'prefixes.prefixe',
+                        'prefixes.idOperateur',
                         'operateurs.nom AS operateur'
                     ])
                     ->join(
                         'operateurs',
                         'operateurs.idOperateur = prefixes.idOperateur',
                         'INNER'
-                    )
-                    ->orderBy("CASE prefixes.prefixe WHEN '033' THEN 1 WHEN '032' THEN 2 WHEN '037' THEN 3 WHEN '034' THEN 4 WHEN '038' THEN 5 ELSE 6 END", '', false)
-                    ->findAll();
+                    );
+
+        if ($idOperateur !== null) {
+            $builder->where('prefixes.idOperateur', $idOperateur);
+        }
+
+        return $builder
+            ->orderBy("CASE prefixes.prefixe WHEN '033' THEN 1 WHEN '032' THEN 2 WHEN '037' THEN 3 WHEN '034' THEN 4 WHEN '038' THEN 5 ELSE 6 END", '', false)
+            ->findAll();
     }
 
 

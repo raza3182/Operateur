@@ -81,27 +81,41 @@ CREATE TABLE operations (
 
 CREATE VIEW vue_gains_frais AS
 SELECT
+    operateurs.idOperateur,
+    operateurs.nom AS operateur,
     typeOperations.nom AS typeOperation,
     COUNT(operations.idOperation) AS nombreOperations,
     COALESCE(SUM(operations.frais), 0) AS totalFrais
-FROM typeOperations
+FROM operateurs
+LEFT JOIN prefixes
+    ON prefixes.idOperateur = operateurs.idOperateur
+LEFT JOIN clients
+    ON SUBSTR(clients.telephone, 1, 3) = prefixes.prefixe
 LEFT JOIN operations
+    ON operations.expediteur = clients.idClient
+LEFT JOIN typeOperations
     ON operations.idTypeOperation = typeOperations.idTypeOperation
 WHERE typeOperations.nom IN ('RETRAIT', 'TRANSFERT')
-GROUP BY typeOperations.idTypeOperation, typeOperations.nom;
+GROUP BY operateurs.idOperateur, operateurs.nom, typeOperations.idTypeOperation, typeOperations.nom;
 
 CREATE VIEW vue_comptes_clients AS
 SELECT
+    operateurs.idOperateur,
+    operateurs.nom AS operateur,
     clients.idClient,
     clients.nom,
     clients.telephone,
     clients.solde,
     COUNT(operations.idOperation) AS nombreOperations
-FROM clients
+FROM operateurs
+JOIN prefixes
+    ON prefixes.idOperateur = operateurs.idOperateur
+JOIN clients
+    ON SUBSTR(clients.telephone, 1, 3) = prefixes.prefixe
 LEFT JOIN operations
     ON operations.expediteur = clients.idClient
     OR operations.destinataire = clients.idClient
-GROUP BY clients.idClient, clients.nom, clients.telephone, clients.solde;
+GROUP BY operateurs.idOperateur, operateurs.nom, clients.idClient, clients.nom, clients.telephone, clients.solde;
 
 -- ============================================
 -- Script de données de test

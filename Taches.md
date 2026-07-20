@@ -20,6 +20,8 @@
 - Fonctionnalité de transfert avec calcul automatique des frais et création automatique du destinataire.
 - Affichage de l'historique des opérations client.
 - Création de l'espace opérateur pour configurer les préfixes, types d'opérations et barèmes.
+- Ajout du choix de l'opérateur avant l'accès à l'espace opérateur.
+- Création d'un espace dédié par opérateur avec ses préfixes, ses comptes clients et ses gains filtrés.
 - Ajout des situations opérateur : gains via frais et comptes clients.
 
 ## Livraison v2

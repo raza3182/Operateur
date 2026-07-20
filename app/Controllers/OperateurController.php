@@ -30,14 +30,22 @@ class OperateurController extends BaseController
 
     public function index()
     {
+        return view('operateur/choix', [
+            'operateurs' => $this->operateurModel->getAvecNombrePrefixes(),
+        ]);
+    }
+
+    public function show(int $idOperateur)
+    {
         return view('operateur/dashboard', [
+            'operateurActuel' => $this->getOperateurOuRetour($idOperateur),
             'operateurs'      => $this->operateurModel->getAvecNombrePrefixes(),
-            'prefixes'        => $this->prefixeModel->getPrefixesAvecOperateur(),
+            'prefixes'        => $this->prefixeModel->getPrefixesAvecOperateur($idOperateur),
             'types'           => $this->typeOperationModel->getAvecNombreBaremes(),
             'baremes'         => $this->baremeModel->getAvecTypeOperation(),
-            'gains'           => $this->operationModel->getGainsParType(),
-            'totalGains'      => $this->operationModel->getTotalGains(),
-            'comptesClients'  => $this->clientModel->getSituationComptes(),
+            'gains'           => $this->operationModel->getGainsParType($idOperateur),
+            'totalGains'      => $this->operationModel->getTotalGains($idOperateur),
+            'comptesClients'  => $this->clientModel->getSituationComptesParOperateur($idOperateur),
         ]);
     }
 
@@ -49,15 +57,14 @@ class OperateurController extends BaseController
             return redirect()->back()->withInput()->with('error', 'Le nom de l\'opérateur est obligatoire.');
         }
 
-        $this->operateurModel->insert(['nom' => $nom]);
+        $idOperateur = $this->operateurModel->insert(['nom' => $nom]);
 
-        return redirect()->to('operateur')->with('success', 'Opérateur ajouté.');
+        return redirect()->to('operateur/' . $idOperateur)->with('success', 'Opérateur ajouté.');
     }
 
-    public function storePrefixe()
+    public function storePrefixe(int $idOperateur)
     {
         $prefixe = preg_replace('/\D+/', '', (string) $this->request->getPost('prefixe'));
-        $idOperateur = (int) $this->request->getPost('idOperateur');
 
         if (!preg_match('/^[0-9]{3}$/', $prefixe) || !$this->operateurModel->find($idOperateur)) {
             return redirect()->back()->withInput()->with('error', 'Préfixe ou opérateur invalide.');
@@ -72,10 +79,10 @@ class OperateurController extends BaseController
             'idOperateur' => $idOperateur,
         ]);
 
-        return redirect()->to('operateur')->with('success', 'Préfixe ajouté.');
+        return redirect()->to('operateur/' . $idOperateur)->with('success', 'Préfixe ajouté.');
     }
 
-    public function storeTypeOperation()
+    public function storeTypeOperation(int $idOperateur)
     {
         $nom = strtoupper(trim((string) $this->request->getPost('nom')));
 
@@ -94,25 +101,25 @@ class OperateurController extends BaseController
             'actif' => 1,
         ]);
 
-        return redirect()->to('operateur')->with('success', 'Type d\'opération ajouté.');
+        return redirect()->to('operateur/' . $idOperateur)->with('success', 'Type d\'opération ajouté.');
     }
 
-    public function toggleTypeOperation(int $idTypeOperation)
+    public function toggleTypeOperation(int $idOperateur, int $idTypeOperation)
     {
         $type = $this->typeOperationModel->find($idTypeOperation);
 
         if (!$type) {
-            return redirect()->to('operateur')->with('error', 'Type d\'opération introuvable.');
+            return redirect()->to('operateur/' . $idOperateur)->with('error', 'Type d\'opération introuvable.');
         }
 
         $this->typeOperationModel->update($idTypeOperation, [
             'actif' => (int) ($type['actif'] ?? 1) === 1 ? 0 : 1,
         ]);
 
-        return redirect()->to('operateur')->with('success', 'Statut du type d\'opération modifié.');
+        return redirect()->to('operateur/' . $idOperateur)->with('success', 'Statut du type d\'opération modifié.');
     }
 
-    public function storeBareme()
+    public function storeBareme(int $idOperateur)
     {
         $idTypeOperation = (int) $this->request->getPost('idTypeOperation');
         $montantMin = (float) $this->request->getPost('montantMin');
@@ -130,15 +137,15 @@ class OperateurController extends BaseController
             'frais'           => $frais,
         ]);
 
-        return redirect()->to('operateur')->with('success', 'Barème ajouté.');
+        return redirect()->to('operateur/' . $idOperateur)->with('success', 'Barème ajouté.');
     }
 
-    public function updateBareme(int $idBaremeFrais)
+    public function updateBareme(int $idOperateur, int $idBaremeFrais)
     {
         $bareme = $this->baremeModel->find($idBaremeFrais);
 
         if (!$bareme) {
-            return redirect()->to('operateur')->with('error', 'Barème introuvable.');
+            return redirect()->to('operateur/' . $idOperateur)->with('error', 'Barème introuvable.');
         }
 
         $montantMin = (float) $this->request->getPost('montantMin');
@@ -155,6 +162,17 @@ class OperateurController extends BaseController
             'frais'      => $frais,
         ]);
 
-        return redirect()->to('operateur')->with('success', 'Barème modifié.');
+        return redirect()->to('operateur/' . $idOperateur)->with('success', 'Barème modifié.');
+    }
+
+    private function getOperateurOuRetour(int $idOperateur): array
+    {
+        $operateur = $this->operateurModel->find($idOperateur);
+
+        if (!$operateur) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound('Opérateur introuvable.');
+        }
+
+        return $operateur;
     }
 }
