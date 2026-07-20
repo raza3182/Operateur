@@ -99,12 +99,21 @@ public function transfert()
     return view('transfert', ['client' => $client]);
 }
 
-
 public function historique()
 {
     if (!session()->get('idClient')) {
         return redirect()->to('/');
     }
-    
+
+    $idClient = session()->get('idClient');
+    $client   = $this->clientModel->find($idClient);
+
+    $operationModel = new \App\Models\OperationModel();
+    $operations = $operationModel->getHistoriqueClient($idClient);
+
+    return view('historique', [
+        'client'     => $client,
+        'operations' => $operations,
+    ]);
 }
 }
