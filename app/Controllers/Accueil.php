@@ -36,17 +36,17 @@ class Accueil extends BaseController
         $telephone = $prefixe . $numero;
         $clientModel = new ClientModel();
         $client = $clientModel
-                  ->chercherParTelephone($telephone);
+                  ->findByTelephone($telephone);
         // CAS A : Client trouvé
 
         if($client)
         {
-            return view(
-                'client',
-                [
-                    'client'=>$client
-                ]
-            );
+            session()->set([
+                'idClient'  => $client['idClient'],
+                'telephone' => $client['telephone'],
+            ]);
+
+            return redirect()->to('client/solde');
         }
 
         // CAS B : Client inexistant
