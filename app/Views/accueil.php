@@ -34,12 +34,8 @@
                     <div class="mb-3">
 
                     <label class="form-label">
-
                     Choisir votre opérateur
-
                     </label>
-
-
                     <select 
                     class="form-select"
                     name="prefixe">

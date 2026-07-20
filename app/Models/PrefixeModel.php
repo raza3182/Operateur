@@ -28,7 +28,7 @@ class PrefixeModel extends Model
                         'operateurs.idOperateur = prefixes.idOperateur',
                         'INNER'
                     )
-                    ->orderBy('prefixes.prefixe', 'ASC')
+                    ->orderBy("CASE prefixes.prefixe WHEN '033' THEN 1 WHEN '032' THEN 2 WHEN '037' THEN 3 WHEN '034' THEN 4 WHEN '038' THEN 5 ELSE 6 END", '', false)
                     ->findAll();
     }
 

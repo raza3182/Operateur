@@ -71,14 +71,16 @@ CREATE TABLE operations (
 -- ============================================
 
 -- 1. Opérateurs
-INSERT INTO operateurs (nom) VALUES ('Telma');
-INSERT INTO operateurs (nom) VALUES ('Orange');
+INSERT INTO operateurs (nom) VALUES ('Airtel Money');
+INSERT INTO operateurs (nom) VALUES ('Orange Money');
+INSERT INTO operateurs (nom) VALUES ('MVola');
 
 -- 2. Préfixes valables
-INSERT INTO prefixes (prefixe, idOperateur) VALUES ('033', 1); -- Telma
-INSERT INTO prefixes (prefixe, idOperateur) VALUES ('038', 1); -- Telma
-INSERT INTO prefixes (prefixe, idOperateur) VALUES ('037', 2); -- Orange
-INSERT INTO prefixes (prefixe, idOperateur) VALUES ('032', 2); -- Orange
+INSERT INTO prefixes (prefixe, idOperateur) VALUES ('033', 1); -- Airtel Money
+INSERT INTO prefixes (prefixe, idOperateur) VALUES ('032', 2); -- Orange Money
+INSERT INTO prefixes (prefixe, idOperateur) VALUES ('037', 2); -- Orange Money
+INSERT INTO prefixes (prefixe, idOperateur) VALUES ('034', 3); -- MVola
+INSERT INTO prefixes (prefixe, idOperateur) VALUES ('038', 3); -- MVola
 
 -- 3. Types d'opérations
 INSERT INTO typeOperations (nom) VALUES ('DEPOT');
