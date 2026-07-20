@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transfert - Mobile Money</title>
     <link rel="stylesheet" href="<?= base_url('assets/bootstrap/css/bootstrap.min.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/app.css') ?>">
 <script src="<?= base_url('assets/bootstrap/js/bootstrap.bundle.min.js') ?>"></script>
 
 </head>
@@ -43,16 +44,9 @@
                 <?= csrf_field() ?>
 
                 <div class="mb-3">
-                    <label for="telephone_dest" class="form-label">Numéro du destinataire</label>
-                    <input
-                        type="text"
-                        name="telephone_dest"
-                        id="telephone_dest"
-                        class="form-control"
-                        placeholder="Ex: 0381234567"
-                        value="<?= old('telephone_dest') ?>"
-                        required
-                    >
+                    <label for="destinataires" class="form-label">Numéro(s) destinataire(s)</label>
+                    <textarea name="destinataires" id="destinataires" class="form-control" rows="3" placeholder="Ex: 0381234567&#10;0371234567" required><?= esc(old('destinataires')) ?></textarea>
+                    <div class="form-text">Un numéro par ligne, ou séparez-les par une virgule. Le montant total sera divisé équitablement.</div>
                 </div>
 
                 <div class="mb-3">
@@ -68,7 +62,13 @@
                         value="<?= old('montant') ?>"
                         required
                     >
-                    <div class="form-text">Des frais seront appliqués selon le montant transféré.</div>
+                    <div class="form-text">Les frais normaux s’appliquent. Une commission est ajoutée si le destinataire est chez un autre opérateur.</div>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" name="inclure_frais_retrait" value="1" id="inclure_frais_retrait" <?= old('inclure_frais_retrait') ? 'checked' : '' ?>>
+                    <label class="form-check-label" for="inclure_frais_retrait">Inclure les frais de retrait pour les destinataires du même opérateur</label>
+                    <div class="form-text">Aucun frais de retrait n’est ajouté pour les autres opérateurs.</div>
                 </div>
 
                 <div class="d-grid gap-2">

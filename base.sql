@@ -3,6 +3,7 @@ PRAGMA foreign_keys = OFF;
 DROP VIEW IF EXISTS vue_gains_frais;
 DROP VIEW IF EXISTS vue_comptes_clients;
 DROP TABLE IF EXISTS operations;
+DROP TABLE IF EXISTS configurations;
 DROP TABLE IF EXISTS clients;
 DROP TABLE IF EXISTS baremeFrais;
 DROP TABLE IF EXISTS typeOperations;
@@ -63,6 +64,13 @@ CREATE TABLE operations (
 
     frais REAL NOT NULL DEFAULT 0,
 
+    commissionInteroperateur REAL NOT NULL DEFAULT 0,
+
+    fraisRetraitInclus REAL NOT NULL DEFAULT 0,
+
+    idOperateurSource INTEGER,
+    idOperateurDestinataire INTEGER,
+
     etat TEXT NOT NULL DEFAULT 'SUCCES',
 
     description TEXT,
@@ -76,8 +84,53 @@ CREATE TABLE operations (
         REFERENCES clients(idClient),
 
     FOREIGN KEY (destinataire)
-        REFERENCES clients(idClient)
+        REFERENCES clients(idClient),
+
+    FOREIGN KEY (idOperateurSource)
+        REFERENCES operateurs(idOperateur),
+
+    FOREIGN KEY (idOperateurDestinataire)
+        REFERENCES operateurs(idOperateur)
 );
+
+CREATE TABLE configurations (
+    cle TEXT PRIMARY KEY,
+    valeur TEXT NOT NULL
+);
+
+CREATE TRIGGER IF NOT EXISTS trg_operations_depot_after_insert
+AFTER INSERT ON operations
+FOR EACH ROW
+WHEN NEW.idTypeOperation = 1
+BEGIN
+    UPDATE clients
+    SET solde = solde + NEW.montant
+    WHERE idClient = NEW.destinataire;
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_operations_retrait_after_insert
+AFTER INSERT ON operations
+FOR EACH ROW
+WHEN NEW.idTypeOperation = 2
+BEGIN
+    UPDATE clients
+    SET solde = solde - (NEW.montant + NEW.frais)
+    WHERE idClient = NEW.expediteur;
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_operations_transfert_after_insert
+AFTER INSERT ON operations
+FOR EACH ROW
+WHEN NEW.idTypeOperation = 3
+BEGIN
+    UPDATE clients
+    SET solde = solde - (NEW.montant + NEW.frais + NEW.commissionInteroperateur + NEW.fraisRetraitInclus)
+    WHERE idClient = NEW.expediteur;
+
+    UPDATE clients
+    SET solde = solde + NEW.montant
+    WHERE idClient = NEW.destinataire;
+END;
 
 CREATE VIEW vue_gains_frais AS
 SELECT
@@ -125,6 +178,9 @@ GROUP BY operateurs.idOperateur, operateurs.nom, clients.idClient, clients.nom, 
 INSERT INTO operateurs (nom) VALUES ('Airtel Money');
 INSERT INTO operateurs (nom) VALUES ('Orange Money');
 INSERT INTO operateurs (nom) VALUES ('MVola');
+
+-- Commission prélevée lorsque le destinataire appartient à un autre opérateur.
+INSERT INTO configurations (cle, valeur) VALUES ('commission_transfert_interoperateur', '2');
 
 -- 2. Préfixes valables
 INSERT INTO prefixes (prefixe, idOperateur) VALUES ('033', 1); -- Airtel Money

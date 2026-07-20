@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Historique - Mobile Money</title>
     <link rel="stylesheet" href="<?= base_url('assets/bootstrap/css/bootstrap.min.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/app.css') ?>">
     <script src="<?= base_url('assets/bootstrap/js/bootstrap.bundle.min.js') ?>"></script>
 </head>
 <body class="bg-light">
@@ -30,6 +31,8 @@
                         <th>Référence</th>
                         <th class="text-end">Montant</th>
                         <th class="text-end">Frais</th>
+                        <th class="text-end">Commission</th>
+                        <th class="text-end">Retrait inclus</th>
                         <th>État</th>
                     </tr>
                 </thead>
@@ -44,6 +47,12 @@
                             </td>
                             <td class="text-end">
                                 <?= number_format((float) ($operation['frais'] ?? 0), 0, ',', ' ') ?> Ar
+                            </td>
+                            <td class="text-end">
+                                <?= number_format((float) ($operation['commissionInteroperateur'] ?? 0), 0, ',', ' ') ?> Ar
+                            </td>
+                            <td class="text-end">
+                                <?= number_format((float) ($operation['fraisRetraitInclus'] ?? 0), 0, ',', ' ') ?> Ar
                             </td>
                             <td><?= esc($operation['etat'] ?? '') ?></td>
                         </tr>

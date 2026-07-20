@@ -56,4 +56,13 @@ class PrefixeModel extends Model
     {
         return (bool) $this->where('prefixe', $prefixe)->first();
     }
+
+    /** Retourne l'opérateur auquel appartient le numéro fourni. */
+    public function getOperateurParTelephone(string $telephone): ?array
+    {
+        return $this->select('operateurs.idOperateur, operateurs.nom')
+            ->join('operateurs', 'operateurs.idOperateur = prefixes.idOperateur')
+            ->where('prefixes.prefixe', substr($telephone, 0, 3))
+            ->first();
+    }
 }

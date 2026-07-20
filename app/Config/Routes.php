@@ -44,3 +44,4 @@ $routes->post('operateur/(:num)/types', 'OperateurController::storeTypeOperation
 $routes->post('operateur/(:num)/types/(:num)/toggle', 'OperateurController::toggleTypeOperation/$1/$2');
 $routes->post('operateur/(:num)/baremes', 'OperateurController::storeBareme/$1');
 $routes->post('operateur/(:num)/baremes/(:num)', 'OperateurController::updateBareme/$1/$2');
+$routes->post('operateur/(:num)/commission-interoperateur', 'OperateurController::updateCommissionInteroperateur/$1');

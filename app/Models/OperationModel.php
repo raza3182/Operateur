@@ -12,7 +12,8 @@ class OperationModel extends Model
     protected $returnType       = 'array';
     protected $allowedFields    = [
         'reference', 'idTypeOperation', 'expediteur', 'destinataire',
-        'montant', 'frais', 'etat', 'description',
+        'montant', 'frais', 'commissionInteroperateur', 'fraisRetraitInclus', 'idOperateurSource',
+        'idOperateurDestinataire', 'etat', 'description',
     ];
 
     protected $useTimestamps = false;
@@ -36,7 +37,7 @@ class OperationModel extends Model
 
     public function getGainsParType(?int $idOperateur = null): array
     {
-        $builder = $this->select('typeOperations.nom AS typeNom, COUNT(operations.idOperation) AS nombreOperations, COALESCE(SUM(operations.frais), 0) AS totalFrais')
+        $builder = $this->select('typeOperations.nom AS typeNom, COUNT(operations.idOperation) AS nombreOperations, COALESCE(SUM(operations.frais + operations.fraisRetraitInclus), 0) AS totalFrais')
             ->join('typeOperations', 'typeOperations.idTypeOperation = operations.idTypeOperation');
 
         if ($idOperateur !== null) {
@@ -55,7 +56,7 @@ class OperationModel extends Model
 
     public function getTotalGains(?int $idOperateur = null): float
     {
-        $builder = $this->select('COALESCE(SUM(operations.frais), 0) AS totalFrais');
+        $builder = $this->select('COALESCE(SUM(operations.frais + operations.fraisRetraitInclus), 0) AS totalFrais');
 
         if ($idOperateur !== null) {
             $builder
@@ -67,5 +68,28 @@ class OperationModel extends Model
         $result = $builder->where('operations.frais >', 0)->first();
 
         return (float) ($result['totalFrais'] ?? 0);
+    }
+
+    /** Commissions reçues lorsqu'un autre opérateur envoie de l'argent ici. */
+    public function getCommissionsInteroperateursRecues(int $idOperateur): float
+    {
+        $result = $this->select('COALESCE(SUM(commissionInteroperateur), 0) AS total')
+            ->where('idOperateurDestinataire', $idOperateur)
+            ->where('idOperateurSource !=', $idOperateur)
+            ->first();
+        return (float) ($result['total'] ?? 0);
+    }
+
+    /** Montants principaux que l'opérateur source doit régler à chaque partenaire. */
+    public function getMontantsAEnvoyer(int $idOperateur): array
+    {
+        return $this->select('operateurs.nom AS operateur, COUNT(operations.idOperation) AS nombreTransferts, COALESCE(SUM(operations.montant), 0) AS montantAEnvoyer, COALESCE(SUM(operations.commissionInteroperateur), 0) AS commissions')
+            ->join('operateurs', 'operateurs.idOperateur = operations.idOperateurDestinataire')
+            ->where('operations.idOperateurSource', $idOperateur)
+            ->where('operations.idOperateurDestinataire !=', $idOperateur)
+            ->where('operations.idTypeOperation', 3)
+            ->groupBy('operations.idOperateurDestinataire, operateurs.nom')
+            ->orderBy('operateurs.nom', 'ASC')
+            ->findAll();
     }
 }

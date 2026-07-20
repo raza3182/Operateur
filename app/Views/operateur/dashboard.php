@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= esc($operateurActuel['nom']) ?> - Mobile Money</title>
     <link rel="stylesheet" href="<?= base_url('assets/bootstrap/css/bootstrap.min.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/app.css') ?>">
     <script src="<?= base_url('assets/bootstrap/js/bootstrap.bundle.min.js') ?>"></script>
 </head>
 <body class="bg-light">
@@ -81,6 +82,7 @@
         <div class="col-lg-4">
             <section class="bg-white border rounded p-3 h-100">
                 <h2 class="h5 mb-3">Préfixes valables</h2>
+                <p class="small text-muted">Ajoutez les préfixes des autres opérateurs pour autoriser les transferts interopérateurs.</p>
                 <form method="post" action="<?= site_url('operateur/' . $operateurActuel['idOperateur'] . '/prefixes') ?>" class="row g-2 mb-3">
                     <?= csrf_field() ?>
                     <div class="col-4">
@@ -210,7 +212,7 @@
 
         <div class="col-xl-5">
             <section class="bg-white border rounded p-3 mb-4">
-                <h2 class="h5 mb-3">Situation des gains</h2>
+                <h2 class="h5 mb-3">Situation des gains de l’opérateur</h2>
                 <div class="table-responsive">
                     <table class="table table-sm align-middle mb-0">
                         <thead>
@@ -231,6 +233,27 @@
                         </tbody>
                     </table>
                 </div>
+            </section>
+
+            <section class="bg-white border rounded p-3 mb-4">
+                <h2 class="h5 mb-3">Commission interopérateur</h2>
+                <p class="small text-muted">Pourcentage ajouté au transfert lorsque les deux préfixes appartiennent à des opérateurs différents.</p>
+                <form method="post" action="<?= site_url('operateur/' . $operateurActuel['idOperateur'] . '/commission-interoperateur') ?>" class="input-group mb-3">
+                    <?= csrf_field() ?>
+                    <input type="number" class="form-control" name="pourcentage" min="0" max="100" step="0.01" value="<?= esc($commissionInteroperateur) ?>" required>
+                    <span class="input-group-text">%</span>
+                    <button class="btn btn-primary">Enregistrer</button>
+                </form>
+                <div class="d-flex justify-content-between border-top pt-3"><span>Commissions reçues des autres opérateurs</span><strong class="text-success"><?= number_format((float) $commissionsAutresOperateurs, 0, ',', ' ') ?> Ar</strong></div>
+            </section>
+
+            <section class="bg-white border rounded p-3 mb-4">
+                <h2 class="h5 mb-3">Montants à envoyer aux autres opérateurs</h2>
+                <?php if (empty($montantsAEnvoyer)): ?>
+                    <p class="text-muted mb-0">Aucun transfert interopérateur sortant.</p>
+                <?php else: ?>
+                    <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>Opérateur destinataire</th><th class="text-end">Transferts</th><th class="text-end">Montant à envoyer</th></tr></thead><tbody><?php foreach ($montantsAEnvoyer as $montantAEnvoyer): ?><tr><td><?= esc($montantAEnvoyer['operateur']) ?></td><td class="text-end"><?= (int) $montantAEnvoyer['nombreTransferts'] ?></td><td class="text-end fw-semibold"><?= number_format((float) $montantAEnvoyer['montantAEnvoyer'], 0, ',', ' ') ?> Ar</td></tr><?php endforeach; ?></tbody></table></div>
+                <?php endif; ?>
             </section>
 
             <section class="bg-white border rounded p-3">

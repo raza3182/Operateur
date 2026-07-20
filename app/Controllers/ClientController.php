@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\BaremeModel;
 use App\Models\ClientModel;
+use App\Models\ConfigurationModel;
 use App\Models\OperationModel;
 use App\Models\PrefixeModel;
 use App\Models\TypeOperationModel;
@@ -18,6 +19,7 @@ class ClientController extends BaseController
     protected $prefixeModel;
     protected $baremeModel;
     protected $operationModel;
+    protected $configurationModel;
     protected $typeOperationModel;
 
     public function __construct()
@@ -26,6 +28,7 @@ class ClientController extends BaseController
         $this->prefixeModel   = new PrefixeModel();
         $this->baremeModel    = new BaremeModel();
         $this->operationModel = new OperationModel();
+        $this->configurationModel = new ConfigurationModel();
         $this->typeOperationModel = new TypeOperationModel();
     }
 
@@ -112,7 +115,6 @@ class ClientController extends BaseController
         $db = db_connect();
         $db->transStart();
 
-        $this->clientModel->crediter((int) $idClient, $montant);
         $this->operationModel->insert([
             'reference'       => $this->genererReference(),
             'idTypeOperation' => self::TYPE_DEPOT,
@@ -167,13 +169,13 @@ class ClientController extends BaseController
             return redirect()->back()->withInput()->with('error', 'Aucun bareme trouve pour ce montant.');
         }
 
-        $db = db_connect();
-        $db->transStart();
-
-        if (!$this->clientModel->debiter((int) $idClient, $montant + $frais)) {
-            $db->transRollback();
+        $client = $this->clientModel->find((int) $idClient);
+        if (!$client || (float) $client['solde'] < ($montant + $frais)) {
             return redirect()->back()->withInput()->with('error', 'Solde insuffisant.');
         }
+
+        $db = db_connect();
+        $db->transStart();
 
         $this->operationModel->insert([
             'reference'       => $this->genererReference(),
@@ -209,63 +211,79 @@ class ClientController extends BaseController
     {
         $idClient = session()->get('idClient');
 
-        if (!$idClient) {
-            return redirect()->to('/');
+        if (!$idClient) return redirect()->to('/');
+
+        $saisieDestinataires = (string) ($this->request->getPost('destinataires') ?: $this->request->getPost('telephone_dest'));
+        $destinataires = array_values(array_unique(array_filter(array_map(
+            static fn (string $numero): string => preg_replace('/\D+/', '', $numero),
+            preg_split('/[,;\n\r]+/', $saisieDestinataires) ?: []
+        ))));
+        $montantTotal = (float) $this->request->getPost('montant');
+        $inclureFraisRetrait = (bool) $this->request->getPost('inclure_frais_retrait');
+
+        if ($montantTotal <= 0 || empty($destinataires) || count($destinataires) > 20) {
+            return redirect()->back()->withInput()->with('error', 'Saisissez un montant et entre 1 et 20 numéros destinataires.');
         }
-
-        $telephoneDest = preg_replace('/\D+/', '', (string) $this->request->getPost('telephone_dest'));
-        $montant = (float) $this->request->getPost('montant');
-
-        if ($montant <= 0 || !preg_match('/^[0-9]{9,10}$/', $telephoneDest)) {
-            return redirect()->back()->withInput()->with('error', 'Informations de transfert invalides.');
-        }
-
         if (!$this->typeOperationModel->estActif(self::TYPE_TRANSFERT)) {
-            return redirect()->back()->withInput()->with('error', 'Le transfert est temporairement desactive.');
+            return redirect()->back()->withInput()->with('error', 'Le transfert est temporairement désactivé.');
         }
 
-        if ($telephoneDest === session()->get('telephone')) {
-            return redirect()->back()->withInput()->with('error', 'Le destinataire doit etre different du compte courant.');
+        $expediteur = $this->clientModel->find((int) $idClient);
+        $operateurSource = $expediteur ? $this->prefixeModel->getOperateurParTelephone($expediteur['telephone']) : null;
+        if (!$expediteur || !$operateurSource) return redirect()->to('/')->with('error', 'Compte ou opérateur introuvable.');
+
+        $nombreDestinataires = count($destinataires);
+        $part = round($montantTotal / $nombreDestinataires, 2);
+        $parts = array_fill(0, $nombreDestinataires, $part);
+        $parts[$nombreDestinataires - 1] = round($montantTotal - array_sum(array_slice($parts, 0, -1)), 2);
+        $transferts = [];
+        $totalADebiter = 0.0;
+
+        foreach ($destinataires as $index => $telephoneDest) {
+            if (!preg_match('/^[0-9]{9,10}$/', $telephoneDest) || $telephoneDest === $expediteur['telephone']) {
+                return redirect()->back()->withInput()->with('error', 'Chaque destinataire doit avoir un numéro valide et différent du vôtre.');
+            }
+            $operateurDestinataire = $this->prefixeModel->getOperateurParTelephone($telephoneDest);
+            if (!$operateurDestinataire) return redirect()->back()->withInput()->with('error', 'Un préfixe destinataire n’est pas configuré.');
+
+            $montantPart = $parts[$index];
+            $fraisTransfert = $this->baremeModel->getFrais(self::TYPE_TRANSFERT, $montantPart);
+            if ($fraisTransfert === null) return redirect()->back()->withInput()->with('error', 'Aucun barème de transfert ne couvre une des parts.');
+
+            $estInteroperateur = (int) $operateurSource['idOperateur'] !== (int) $operateurDestinataire['idOperateur'];
+            $commission = $estInteroperateur ? round($montantPart * $this->configurationModel->commissionInteroperateur() / 100, 2) : 0.0;
+            // Les frais de retrait prépayés ne concernent jamais les autres opérateurs.
+            $fraisRetrait = (!$estInteroperateur && $inclureFraisRetrait)
+                ? $this->baremeModel->getFrais(self::TYPE_RETRAIT, $montantPart)
+                : 0.0;
+            if ($fraisRetrait === null) return redirect()->back()->withInput()->with('error', 'Aucun barème de retrait ne couvre une des parts.');
+
+            $transferts[] = compact('telephoneDest', 'operateurDestinataire', 'montantPart', 'fraisTransfert', 'commission', 'fraisRetrait');
+            $totalADebiter += $montantPart + $fraisTransfert + $commission + $fraisRetrait;
         }
 
-        if (!$this->prefixeModel->estValide(substr($telephoneDest, 0, 3))) {
-            return redirect()->back()->withInput()->with('error', "Ce numero n'appartient pas a notre operateur.");
+        $client = $this->clientModel->find((int) $idClient);
+        if (!$client || (float) $client['solde'] < $totalADebiter) {
+            return redirect()->back()->withInput()->with('error', 'Solde insuffisant pour le montant et tous les frais.');
         }
 
-        $frais = $this->baremeModel->getFrais(self::TYPE_TRANSFERT, $montant);
-
-        if ($frais === null) {
-            return redirect()->back()->withInput()->with('error', 'Aucun bareme trouve pour ce montant.');
-        }
-
-        $destinataire = $this->clientModel->findOrCreate($telephoneDest);
         $db = db_connect();
         $db->transStart();
-
-        if (!$this->clientModel->debiter((int) $idClient, $montant + $frais)) {
-            $db->transRollback();
-            return redirect()->back()->withInput()->with('error', 'Solde insuffisant.');
+        foreach ($transferts as $transfert) {
+            $destinataire = $this->clientModel->findOrCreate($transfert['telephoneDest']);
+            $this->operationModel->insert([
+                'reference' => $this->genererReference(), 'idTypeOperation' => self::TYPE_TRANSFERT,
+                'expediteur' => $idClient, 'destinataire' => $destinataire['idClient'],
+                'montant' => $transfert['montantPart'], 'frais' => $transfert['fraisTransfert'],
+                'commissionInteroperateur' => $transfert['commission'], 'fraisRetraitInclus' => $transfert['fraisRetrait'],
+                'idOperateurSource' => $operateurSource['idOperateur'], 'idOperateurDestinataire' => $transfert['operateurDestinataire']['idOperateur'],
+                'etat' => 'SUCCES', 'description' => $nombreDestinataires > 1 ? 'Transfert multiple' : 'Transfert',
+            ]);
         }
-
-        $this->clientModel->crediter((int) $destinataire['idClient'], $montant);
-        $this->operationModel->insert([
-            'reference'       => $this->genererReference(),
-            'idTypeOperation' => self::TYPE_TRANSFERT,
-            'expediteur'      => $idClient,
-            'destinataire'    => $destinataire['idClient'],
-            'montant'         => $montant,
-            'frais'           => $frais,
-            'etat'            => 'SUCCES',
-            'description'     => 'Transfert',
-        ]);
-
         $db->transComplete();
+        if (!$db->transStatus()) return redirect()->back()->withInput()->with('error', 'Le transfert a échoué.');
 
-        if (!$db->transStatus()) {
-            return redirect()->back()->withInput()->with('error', 'Le transfert a echoue.');
-        }
-
-        return redirect()->to('client/solde')->with('success', 'Transfert effectue avec succes.');
+        return redirect()->to('client/solde')->with('success', $nombreDestinataires . ' transfert(s) effectué(s). Total débité : ' . number_format($totalADebiter, 0, ',', ' ') . ' Ar.');
     }
 
     public function historique()
