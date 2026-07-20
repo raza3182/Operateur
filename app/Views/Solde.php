@@ -17,6 +17,18 @@
             <h5 class="text-muted mb-1">Bienvenue</h5>
             <h4 class="mb-4"><?= esc($client['nom']) ?></h4>
 
+            <?php if (session()->getFlashdata('error')): ?>
+                <div class="alert alert-danger text-start">
+                    <?= esc(session()->getFlashdata('error')) ?>
+                </div>
+            <?php endif; ?>
+
+            <?php if (session()->getFlashdata('success')): ?>
+                <div class="alert alert-success text-start">
+                    <?= esc(session()->getFlashdata('success')) ?>
+                </div>
+            <?php endif; ?>
+
             <p class="text-muted mb-1">Numéro</p>
             <p class="fw-bold mb-4"><?= esc($client['telephone']) ?></p>
 

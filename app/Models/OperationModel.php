@@ -33,4 +33,23 @@ class OperationModel extends Model
             ->orderBy('dateOperation', 'DESC')
             ->findAll();
     }
+
+    public function getGainsParType(): array
+    {
+        return $this->select('typeOperations.nom AS typeNom, COUNT(operations.idOperation) AS nombreOperations, COALESCE(SUM(operations.frais), 0) AS totalFrais')
+            ->join('typeOperations', 'typeOperations.idTypeOperation = operations.idTypeOperation')
+            ->whereIn('typeOperations.nom', ['RETRAIT', 'TRANSFERT'])
+            ->groupBy('typeOperations.idTypeOperation')
+            ->orderBy('typeOperations.nom', 'ASC')
+            ->findAll();
+    }
+
+    public function getTotalGains(): float
+    {
+        $result = $this->select('COALESCE(SUM(frais), 0) AS totalFrais')
+            ->where('frais >', 0)
+            ->first();
+
+        return (float) ($result['totalFrais'] ?? 0);
+    }
 }

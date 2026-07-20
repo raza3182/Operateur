@@ -6,6 +6,7 @@ use App\Models\BaremeModel;
 use App\Models\ClientModel;
 use App\Models\OperationModel;
 use App\Models\PrefixeModel;
+use App\Models\TypeOperationModel;
 
 class ClientController extends BaseController
 {
@@ -17,6 +18,7 @@ class ClientController extends BaseController
     protected $prefixeModel;
     protected $baremeModel;
     protected $operationModel;
+    protected $typeOperationModel;
 
     public function __construct()
     {
@@ -24,6 +26,7 @@ class ClientController extends BaseController
         $this->prefixeModel   = new PrefixeModel();
         $this->baremeModel    = new BaremeModel();
         $this->operationModel = new OperationModel();
+        $this->typeOperationModel = new TypeOperationModel();
     }
 
     /**
@@ -102,6 +105,10 @@ class ClientController extends BaseController
             return redirect()->back()->withInput()->with('error', 'Montant invalide.');
         }
 
+        if (!$this->typeOperationModel->estActif(self::TYPE_DEPOT)) {
+            return redirect()->back()->withInput()->with('error', 'Le depot est temporairement desactive.');
+        }
+
         $db = db_connect();
         $db->transStart();
 
@@ -148,6 +155,10 @@ class ClientController extends BaseController
 
         if ($montant <= 0) {
             return redirect()->back()->withInput()->with('error', 'Montant invalide.');
+        }
+
+        if (!$this->typeOperationModel->estActif(self::TYPE_RETRAIT)) {
+            return redirect()->back()->withInput()->with('error', 'Le retrait est temporairement desactive.');
         }
 
         $frais = $this->baremeModel->getFrais(self::TYPE_RETRAIT, $montant);
@@ -207,6 +218,10 @@ class ClientController extends BaseController
 
         if ($montant <= 0 || !preg_match('/^[0-9]{9,10}$/', $telephoneDest)) {
             return redirect()->back()->withInput()->with('error', 'Informations de transfert invalides.');
+        }
+
+        if (!$this->typeOperationModel->estActif(self::TYPE_TRANSFERT)) {
+            return redirect()->back()->withInput()->with('error', 'Le transfert est temporairement desactive.');
         }
 
         if ($telephoneDest === session()->get('telephone')) {

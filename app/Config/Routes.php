@@ -35,3 +35,11 @@ $routes->get('client/transfert', 'ClientController::transfert');
 $routes->post('client/transfert', 'ClientController::storeTransfert');
 
 $routes->get('client/historique', 'ClientController::historique');
+
+$routes->get('operateur', 'OperateurController::index');
+$routes->post('operateur/operateurs', 'OperateurController::storeOperateur');
+$routes->post('operateur/prefixes', 'OperateurController::storePrefixe');
+$routes->post('operateur/types', 'OperateurController::storeTypeOperation');
+$routes->post('operateur/types/(:num)/toggle', 'OperateurController::toggleTypeOperation/$1');
+$routes->post('operateur/baremes', 'OperateurController::storeBareme');
+$routes->post('operateur/baremes/(:num)', 'OperateurController::updateBareme/$1');

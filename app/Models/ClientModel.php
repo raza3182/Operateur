@@ -71,6 +71,20 @@ class ClientModel extends Model
         return $client ? (float) $client['solde'] : 0;
     }
 
+    public function getSituationComptes(): array
+    {
+        return $this->select('clients.*, COUNT(operations.idOperation) AS nombreOperations')
+            ->join(
+                'operations',
+                'operations.expediteur = clients.idClient OR operations.destinataire = clients.idClient',
+                'left',
+                false
+            )
+            ->groupBy('clients.idClient')
+            ->orderBy('clients.nom', 'ASC')
+            ->findAll();
+    }
+
     /**
      * Crédite le solde du client (dépôt, ou réception de transfert).
      */

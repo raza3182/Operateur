@@ -30,6 +30,11 @@
                         <?= esc(session()->getFlashdata('erreur')) ?>
                     </div>
                 <?php endif; ?>
+                <?php if (session()->getFlashdata('error')): ?>
+                    <div class="alert alert-danger" role="alert">
+                        <?= esc(session()->getFlashdata('error')) ?>
+                    </div>
+                <?php endif; ?>
                 <form method="post" action="<?= base_url('connexion') ?>">
                     <div class="mb-3">
 
@@ -71,6 +76,9 @@
                     Continuer
                     </button>
                 </form>
+                <div class="text-center mt-3">
+                    <a href="<?= site_url('operateur') ?>" class="link-secondary">Espace opérateur</a>
+                </div>
             </div>
         </div>
     </div>

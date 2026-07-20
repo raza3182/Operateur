@@ -1,3 +1,15 @@
+PRAGMA foreign_keys = OFF;
+
+DROP VIEW IF EXISTS vue_gains_frais;
+DROP VIEW IF EXISTS vue_comptes_clients;
+DROP TABLE IF EXISTS operations;
+DROP TABLE IF EXISTS clients;
+DROP TABLE IF EXISTS baremeFrais;
+DROP TABLE IF EXISTS typeOperations;
+DROP TABLE IF EXISTS prefixes;
+DROP TABLE IF EXISTS operateurs;
+
+PRAGMA foreign_keys = ON;
 
 CREATE TABLE operateurs (
     idOperateur INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -15,7 +27,8 @@ CREATE TABLE prefixes (
 
 CREATE TABLE typeOperations (
     idTypeOperation INTEGER PRIMARY KEY AUTOINCREMENT,
-    nom TEXT NOT NULL UNIQUE
+    nom TEXT NOT NULL UNIQUE,
+    actif INTEGER NOT NULL DEFAULT 1 CHECK (actif IN (0, 1))
 );
 
 CREATE TABLE baremeFrais (
@@ -66,6 +79,30 @@ CREATE TABLE operations (
         REFERENCES clients(idClient)
 );
 
+CREATE VIEW vue_gains_frais AS
+SELECT
+    typeOperations.nom AS typeOperation,
+    COUNT(operations.idOperation) AS nombreOperations,
+    COALESCE(SUM(operations.frais), 0) AS totalFrais
+FROM typeOperations
+LEFT JOIN operations
+    ON operations.idTypeOperation = typeOperations.idTypeOperation
+WHERE typeOperations.nom IN ('RETRAIT', 'TRANSFERT')
+GROUP BY typeOperations.idTypeOperation, typeOperations.nom;
+
+CREATE VIEW vue_comptes_clients AS
+SELECT
+    clients.idClient,
+    clients.nom,
+    clients.telephone,
+    clients.solde,
+    COUNT(operations.idOperation) AS nombreOperations
+FROM clients
+LEFT JOIN operations
+    ON operations.expediteur = clients.idClient
+    OR operations.destinataire = clients.idClient
+GROUP BY clients.idClient, clients.nom, clients.telephone, clients.solde;
+
 -- ============================================
 -- Script de données de test
 -- ============================================
@@ -83,9 +120,9 @@ INSERT INTO prefixes (prefixe, idOperateur) VALUES ('034', 3); -- MVola
 INSERT INTO prefixes (prefixe, idOperateur) VALUES ('038', 3); -- MVola
 
 -- 3. Types d'opérations
-INSERT INTO typeOperations (nom) VALUES ('DEPOT');
-INSERT INTO typeOperations (nom) VALUES ('RETRAIT');
-INSERT INTO typeOperations (nom) VALUES ('TRANSFERT');
+INSERT INTO typeOperations (nom, actif) VALUES ('DEPOT', 1);
+INSERT INTO typeOperations (nom, actif) VALUES ('RETRAIT', 1);
+INSERT INTO typeOperations (nom, actif) VALUES ('TRANSFERT', 1);
 
 -- 4. Barèmes de frais (exemple du sujet, appliqué au RETRAIT idTypeOperation=2)
 INSERT INTO baremeFrais (idTypeOperation, montantMin, montantMax, frais) VALUES (2, 100, 1000, 50);

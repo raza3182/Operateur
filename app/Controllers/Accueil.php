@@ -27,17 +27,22 @@ class Accueil extends BaseController
     {
         $prefixe = preg_replace('/\D+/', '', (string) $this->request->getPost('prefixe'));
         $numero = preg_replace('/\D+/', '', (string) $this->request->getPost('numero'));
+        $prefixeModel = new PrefixeModel();
 
-        if ($prefixe === '' || $numero === '') {
-            return redirect()->back()->with('erreur', 'Veuillez choisir un opérateur et saisir un numéro.');
+        if ($prefixe === '' || $numero === '' || !$prefixeModel->estValide($prefixe)) {
+            return redirect()->back()->with('erreur', 'Veuillez choisir un opérateur valide et saisir un numéro.');
         }
 
         // Construction du numéro complet, sans espaces ni caractères spéciaux.
         $telephone = $prefixe . $numero;
+
+        if (!preg_match('/^[0-9]{9,10}$/', $telephone)) {
+            return redirect()->back()->with('erreur', 'Numéro de téléphone invalide.');
+        }
+
         $clientModel = new ClientModel();
         $client = $clientModel
-                  ->findByTelephone($telephone);
-        // CAS A : Client trouvé
+                  ->findOrCreate($telephone);
 
         if($client)
         {
@@ -49,17 +54,9 @@ class Accueil extends BaseController
             return redirect()->to('client/solde');
         }
 
-        // CAS B : Client inexistant
-        else
-        {
-            return redirect()
-                   ->back()
-                   ->with(
-                       'erreur',
-                       'Ce numéro n\'est pas encore enregistré. Veuillez contacter votre opérateur.'
-                   );
-        }
-
+        return redirect()
+               ->back()
+               ->with('erreur', 'Connexion impossible. Veuillez réessayer.');
     }
 
 }

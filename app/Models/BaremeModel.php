@@ -25,4 +25,13 @@ class BaremeModel extends Model
 
         return $bareme ? (float) $bareme['frais'] : null;
     }
+
+    public function getAvecTypeOperation(): array
+    {
+        return $this->select('baremeFrais.*, typeOperations.nom AS typeNom')
+            ->join('typeOperations', 'typeOperations.idTypeOperation = baremeFrais.idTypeOperation')
+            ->orderBy('typeOperations.idTypeOperation', 'ASC')
+            ->orderBy('baremeFrais.montantMin', 'ASC')
+            ->findAll();
+    }
 }
