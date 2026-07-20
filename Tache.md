@@ -7,3 +7,9 @@
 
 4- insertion de base:
 sqlite3 writable/database/base.db < base.sql
+
+5-Creation de Client Controller 
+
+6-Affichage du solde actuel du client apres login
+
+7-Creation des types d'operation:transfert,retrait et depot

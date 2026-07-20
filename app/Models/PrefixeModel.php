@@ -6,17 +6,12 @@ use CodeIgniter\Model;
 
 class PrefixeModel extends Model
 {
-    protected $table = 'prefixes';
-
-    protected $primaryKey = 'idPrefixe';
-
-    protected $returnType = 'array';
-
-    protected $allowedFields = [
-        'prefixe',
-        'idOperateur'
-    ];
-
+    protected $table            = 'prefixes';
+    protected $primaryKey       = 'idPrefixe';
+    protected $useAutoIncrement = true;
+    protected $returnType       = 'array';
+    protected $allowedFields    = ['prefixe', 'idOperateur'];
+    protected $useTimestamps    = false;
 
     /**
      * Récupérer tous les préfixes avec leur opérateur
@@ -45,5 +40,13 @@ class PrefixeModel extends Model
     {
         return $this->where('prefixe', $prefixe)
                     ->first();
+    }
+
+    /**
+     * Vérifie si un préfixe (3 premiers chiffres du numéro) est valide.
+     */
+    public function estValide(string $prefixe): bool
+    {
+        return (bool) $this->where('prefixe', $prefixe)->first();
     }
 }
