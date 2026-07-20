@@ -1,0 +1,11 @@
+:root { --mm-primary: #155eef; --mm-dark: #101828; --mm-soft: #f5f8ff; }
+body { color: var(--mm-dark); background: #f7f9fc; }
+.navbar-brand { letter-spacing: -.03em; }
+.hero-card { background: linear-gradient(135deg, #155eef, #0b4bc4); color: #fff; border: 0; }
+.app-card { border: 0; border-radius: 1rem; box-shadow: 0 .5rem 1.5rem rgba(16, 24, 40, .08); }
+.stat-card { border: 0; border-radius: .9rem; }
+.section-title { font-size: 1.05rem; font-weight: 700; }
+.table > :not(caption) > * > * { vertical-align: middle; }
+.form-control, .form-select { min-height: 2.75rem; }
+.btn { border-radius: .6rem; font-weight: 600; }
+.operator-nav { background: var(--mm-dark); }

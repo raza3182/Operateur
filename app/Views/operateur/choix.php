@@ -34,20 +34,6 @@
             <?php if (session()->getFlashdata('success')): ?>
                 <div class="alert alert-success"><?= esc(session()->getFlashdata('success')) ?></div>
             <?php endif; ?>
-
-            <section class="bg-white border rounded p-3 mb-4">
-                <form method="post" action="<?= site_url('operateur/operateurs') ?>" class="row g-2 align-items-end">
-                    <?= csrf_field() ?>
-                    <div class="col-md">
-                        <label for="nom" class="form-label">Nouvel opérateur</label>
-                        <input type="text" name="nom" id="nom" class="form-control" placeholder="Ex: MVola" required>
-                    </div>
-                    <div class="col-md-auto">
-                        <button type="submit" class="btn btn-primary w-100">Ajouter</button>
-                    </div>
-                </form>
-            </section>
-
             <div class="row g-3">
                 <?php foreach ($operateurs as $operateur): ?>
                     <div class="col-md-6 col-xl-4">
