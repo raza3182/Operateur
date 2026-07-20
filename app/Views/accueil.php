@@ -88,7 +88,7 @@
                         <div class="text-center mt-4">
                             <a class="text-decoration-none"
                             href="<?= site_url('operateur') ?>">
-                                🔐 Eespace opérateur
+                                🔐 Espace opérateur
                             </a>
                         </div>
                     </div>
