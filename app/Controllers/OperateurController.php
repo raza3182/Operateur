@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\BaremeModel;
 use App\Models\ClientModel;
+use App\Models\ConfigurationModel;
 use App\Models\OperateurModel;
 use App\Models\OperationModel;
 use App\Models\PrefixeModel;
@@ -17,6 +18,7 @@ class OperateurController extends BaseController
     protected BaremeModel $baremeModel;
     protected OperationModel $operationModel;
     protected ClientModel $clientModel;
+    protected ConfigurationModel $configurationModel;
 
     public function __construct()
     {
@@ -26,6 +28,7 @@ class OperateurController extends BaseController
         $this->baremeModel        = new BaremeModel();
         $this->operationModel     = new OperationModel();
         $this->clientModel        = new ClientModel();
+        $this->configurationModel = new ConfigurationModel();
     }
 
     public function index()
@@ -45,6 +48,9 @@ class OperateurController extends BaseController
             'baremes'         => $this->baremeModel->getAvecTypeOperation(),
             'gains'           => $this->operationModel->getGainsParType($idOperateur),
             'totalGains'      => $this->operationModel->getTotalGains($idOperateur),
+            'commissionInteroperateur' => $this->configurationModel->commissionInteroperateur(),
+            'commissionsAutresOperateurs' => $this->operationModel->getCommissionsInteroperateursRecues($idOperateur),
+            'montantsAEnvoyer' => $this->operationModel->getMontantsAEnvoyer($idOperateur),
             'comptesClients'  => $this->clientModel->getSituationComptesParOperateur($idOperateur),
         ]);
     }
@@ -163,6 +169,16 @@ class OperateurController extends BaseController
         ]);
 
         return redirect()->to('operateur/' . $idOperateur)->with('success', 'Barème modifié.');
+    }
+
+    public function updateCommissionInteroperateur(int $idOperateur)
+    {
+        $pourcentage = (float) $this->request->getPost('pourcentage');
+        if ($pourcentage < 0 || $pourcentage > 100) {
+            return redirect()->back()->withInput()->with('error', 'Le pourcentage doit être compris entre 0 et 100.');
+        }
+        $this->configurationModel->definirCommissionInteroperateur($pourcentage);
+        return redirect()->to('operateur/' . $idOperateur)->with('success', 'Commission interopérateur mise à jour.');
     }
 
     private function getOperateurOuRetour(int $idOperateur): array

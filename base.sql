@@ -3,6 +3,7 @@ PRAGMA foreign_keys = OFF;
 DROP VIEW IF EXISTS vue_gains_frais;
 DROP VIEW IF EXISTS vue_comptes_clients;
 DROP TABLE IF EXISTS operations;
+DROP TABLE IF EXISTS configurations;
 DROP TABLE IF EXISTS clients;
 DROP TABLE IF EXISTS baremeFrais;
 DROP TABLE IF EXISTS typeOperations;
@@ -63,6 +64,13 @@ CREATE TABLE operations (
 
     frais REAL NOT NULL DEFAULT 0,
 
+    commissionInteroperateur REAL NOT NULL DEFAULT 0,
+
+    fraisRetraitInclus REAL NOT NULL DEFAULT 0,
+
+    idOperateurSource INTEGER,
+    idOperateurDestinataire INTEGER,
+
     etat TEXT NOT NULL DEFAULT 'SUCCES',
 
     description TEXT,
@@ -76,28 +84,23 @@ CREATE TABLE operations (
         REFERENCES clients(idClient),
 
     FOREIGN KEY (destinataire)
-        REFERENCES clients(idClient)
+        REFERENCES clients(idClient),
+
+    FOREIGN KEY (idOperateurSource)
+        REFERENCES operateurs(idOperateur),
+
+    FOREIGN KEY (idOperateurDestinataire)
+        REFERENCES operateurs(idOperateur)
 );
 
-CREATE VIEW vue_gains_frais AS
-SELECT
-    operateurs.idOperateur,
-    operateurs.nom AS operateur,
-    typeOperations.nom AS typeOperation,
-    COUNT(operations.idOperation) AS nombreOperations,
-    COALESCE(SUM(operations.frais), 0) AS totalFrais
-FROM operateurs
-LEFT JOIN prefixes
-    ON prefixes.idOperateur = operateurs.idOperateur
-LEFT JOIN clients
-    ON SUBSTR(clients.telephone, 1, 3) = prefixes.prefixe
-LEFT JOIN operations
-    ON operations.expediteur = clients.idClient
-LEFT JOIN typeOperations
-    ON operations.idTypeOperation = typeOperations.idTypeOperation
-WHERE typeOperations.nom IN ('RETRAIT', 'TRANSFERT')
-GROUP BY operateurs.idOperateur, operateurs.nom, typeOperations.idTypeOperation, typeOperations.nom;
+CREATE TABLE configurations (
+    cle TEXT PRIMARY KEY,
+    valeur TEXT NOT NULL
+);
 
+-- ======================================
+-- VUE : Situation des comptes clients
+-- ======================================
 CREATE VIEW vue_comptes_clients AS
 SELECT
     operateurs.idOperateur,
@@ -115,7 +118,47 @@ JOIN clients
 LEFT JOIN operations
     ON operations.expediteur = clients.idClient
     OR operations.destinataire = clients.idClient
-GROUP BY operateurs.idOperateur, operateurs.nom, clients.idClient, clients.nom, clients.telephone, clients.solde;
+GROUP BY
+    operateurs.idOperateur,
+    operateurs.nom,
+    clients.idClient,
+    clients.nom,
+    clients.telephone,
+    clients.solde;
+
+-- ======================================
+-- VUE : Gains via les frais
+-- ======================================
+CREATE VIEW vue_gains_frais AS
+SELECT
+    operateurs.idOperateur,
+    operateurs.nom AS operateur,
+    typeOperations.nom AS typeOperation,
+    COUNT(operations.idOperation) AS nombreOperations,
+    COALESCE(SUM(operations.frais), 0) AS totalFrais
+FROM operateurs
+LEFT JOIN prefixes
+    ON prefixes.idOperateur = operateurs.idOperateur
+LEFT JOIN clients
+    ON SUBSTR(clients.telephone, 1, 3) = prefixes.prefixe
+LEFT JOIN operations
+    ON operations.expediteur = clients.idClient
+LEFT JOIN typeOperations
+    ON operations.idTypeOperation = typeOperations.idTypeOperation
+WHERE typeOperations.nom IN ('RETRAIT', 'TRANSFERT')
+GROUP BY
+    operateurs.idOperateur,
+    operateurs.nom,
+    typeOperations.idTypeOperation,
+    typeOperations.nom;
+
+-- ======================================
+-- TABLE : CONFIGURATIONS
+-- ======================================
+CREATE TABLE configurations (
+    cle TEXT PRIMARY KEY,
+    valeur TEXT NOT NULL
+);
 
 -- ============================================
 -- Script de données de test
@@ -125,6 +168,9 @@ GROUP BY operateurs.idOperateur, operateurs.nom, clients.idClient, clients.nom, 
 INSERT INTO operateurs (nom) VALUES ('Airtel Money');
 INSERT INTO operateurs (nom) VALUES ('Orange Money');
 INSERT INTO operateurs (nom) VALUES ('MVola');
+
+-- Commission prélevée lorsque le destinataire appartient à un autre opérateur.
+INSERT INTO configurations (cle, valeur) VALUES ('commission_transfert_interoperateur', '2');
 
 -- 2. Préfixes valables
 INSERT INTO prefixes (prefixe, idOperateur) VALUES ('033', 1); -- Airtel Money

@@ -26,4 +26,17 @@
 
 ## Livraison v2
 
-- À compléter avec les nouveaux travaux de la version 2.
+### ETU004143
+- [ ] **Configuration %** en plus de commissions pour les transferts vers les autres opérateurs 
+    - Creation des view 
+        . vue_comptes_clients
+        . vue_gains_frais
+- [ ] Situation gain via les différents frais” , séparer opérateur et autres opérateurs
+
+
+### ETU004059
+- [ ] Situation des montants à envoyer à chaque opérateur
+- [ ] Option inclure frais de retrait lors de l’envoi
+il n’y a pas de frais de retrait pour les autres opérateurs
+- [ ] Envoi multiple vers plusieurs numéros ( divisé le montant pour chaque numéro)
+même opérateur uniquement
