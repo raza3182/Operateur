@@ -48,25 +48,19 @@
                             </label>
 
                             <div class="input-group mb-4">
-
                                 <select
-                                    class="form-select"
+                                    class="form-select fw-semibold"
                                     name="prefixe"
-                                    style="max-width:160px;"
+                                    style="max-width:220px;"
                                     required>
-
-                                    <option value="">Préfixe</option>
-
+                                    <option value="">📱 Choisir</option>
                                     <?php foreach($prefixes as $p): ?>
-
                                         <option value="<?= $p['prefixe'] ?>">
-                                            <?= $p['prefixe'] ?> - <?= $p['operateur'] ?>
+                                            🇲🇬 +261 (<?= substr($p['prefixe'], 1) ?>)
                                         </option>
-
                                     <?php endforeach; ?>
 
                                 </select>
-
                                 <input
                                     type="text"
                                     class="form-control"
