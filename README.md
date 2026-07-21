@@ -15,7 +15,7 @@
 
 - [ ] Accuiel:
   - View:(accueil)
-    
+
   - Modèle->()
 
 ## Creation de tage
@@ -26,5 +26,7 @@ git push
 git push origin v3
 
 il y de promotion 
- dumunition de % -frais de transfer même opérateur
-Creation 
+ dumunition de -10% frais de transfer même opérateurt
+ Enregistre le dans la base :
+
+  - Modèle->()

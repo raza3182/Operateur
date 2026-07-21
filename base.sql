@@ -2,6 +2,7 @@ PRAGMA foreign_keys = OFF;
 
 DROP VIEW IF EXISTS vue_gains_frais;
 DROP VIEW IF EXISTS vue_comptes_clients;
+DROP VIEW IF EXISTS promotions;
 DROP TABLE IF EXISTS operations;
 DROP TABLE IF EXISTS configurations;
 DROP TABLE IF EXISTS clients;
@@ -63,6 +64,8 @@ CREATE TABLE operations (
     montant REAL NOT NULL CHECK (montant > 0),
 
     frais REAL NOT NULL DEFAULT 0,
+
+    remisePromotion REAL NOT NULL DEFAULT 0,
 
     commissionInteroperateur REAL NOT NULL DEFAULT 0,
 
@@ -153,18 +156,26 @@ GROUP BY
     typeOperations.nom;
 
 
-CREATE VIEW  promotions(
-    SELECT
-        typeOperations.idTypeOperation,
-        operations.idOperation,
-        clients.idClient
-    FROM typeOperations WHERE idTypeOperation='3'
-    LEFT JOIN operations
-        ON typeOperations.idTypeOperation = operateur.idTypeOperation,
-    LEFT JOIN clients 
-        ON clients.idClient = operations.idClient
-    UPDATE clients SET solde = solde + ((solde))/10  ? WHERE clients.idClient = ?
-);
+-- ======================================
+-- VUE : Promotions de transfert interne
+-- ======================================
+-- La promotion réduit les frais, sans modifier le solde directement.
+CREATE VIEW promotions AS
+SELECT
+    operations.idOperation,
+    operations.idTypeOperation,
+    operations.expediteur AS idClient,
+    operations.destinataire AS idClientDestinataire,
+    operations.idOperateurSource,
+    operations.idOperateurDestinataire,
+    operations.frais + operations.remisePromotion AS fraisAvantPromotion,
+    operations.remisePromotion AS montantRemise,
+    operations.frais AS fraisAppliques,
+    operations.dateOperation
+FROM operations
+WHERE operations.idTypeOperation = 3
+    AND operations.idOperateurSource = operations.idOperateurDestinataire
+    AND operations.remisePromotion > 0;
 -- ======================================
 -- TABLE : CONFIGURATIONS
 -- ======================================

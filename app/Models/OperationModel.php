@@ -12,7 +12,7 @@ class OperationModel extends Model
     protected $returnType       = 'array';
     protected $allowedFields    = [
         'reference', 'idTypeOperation', 'expediteur', 'destinataire',
-        'montant', 'frais', 'commissionInteroperateur', 'fraisRetraitInclus', 'idOperateurSource',
+        'montant', 'frais', 'remisePromotion', 'commissionInteroperateur', 'fraisRetraitInclus', 'idOperateurSource',
         'idOperateurDestinataire', 'etat', 'description',
     ];
 

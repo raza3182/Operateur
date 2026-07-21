@@ -263,6 +263,10 @@ class ClientController extends BaseController
             if ($fraisTransfert === null) return redirect()->back()->withInput()->with('error', 'Aucun barème de transfert ne couvre une des parts.');
 
             $estInteroperateur = (int) $operateurSource['idOperateur'] !== (int) $operateurDestinataire['idOperateur'];
+            // Promotion : -10 % sur les frais de transfert au sein d'un même opérateur.
+            // Le montant de la remise est conservé avec l'opération pour assurer sa traçabilité.
+            $remisePromotion = !$estInteroperateur ? round($fraisTransfert * 0.10, 2) : 0.0;
+            $fraisTransfert = round($fraisTransfert - $remisePromotion, 2);
             $commission = $estInteroperateur ? round($montantPart * $this->configurationModel->commissionInteroperateur() / 100, 2) : 0.0;
             // Les frais de retrait prépayés ne concernent jamais les autres opérateurs.
             $fraisRetrait = (!$estInteroperateur && $inclureFraisRetrait)
@@ -270,7 +274,7 @@ class ClientController extends BaseController
                 : 0.0;
             if ($fraisRetrait === null) return redirect()->back()->withInput()->with('error', 'Aucun barème de retrait ne couvre une des parts.');
 
-            $transferts[] = compact('telephoneDest', 'operateurDestinataire', 'montantPart', 'fraisTransfert', 'commission', 'fraisRetrait');
+            $transferts[] = compact('telephoneDest', 'operateurDestinataire', 'montantPart', 'fraisTransfert', 'remisePromotion', 'commission', 'fraisRetrait');
             $totalADebiter += $montantPart + $fraisTransfert + $commission + $fraisRetrait;
         }
 
@@ -287,9 +291,10 @@ class ClientController extends BaseController
                 'reference' => $this->genererReference(), 'idTypeOperation' => self::TYPE_TRANSFERT,
                 'expediteur' => $idClient, 'destinataire' => $destinataire['idClient'],
                 'montant' => $transfert['montantPart'], 'frais' => $transfert['fraisTransfert'],
+                'remisePromotion' => $transfert['remisePromotion'],
                 'commissionInteroperateur' => $transfert['commission'], 'fraisRetraitInclus' => $transfert['fraisRetrait'],
                 'idOperateurSource' => $operateurSource['idOperateur'], 'idOperateurDestinataire' => $transfert['operateurDestinataire']['idOperateur'],
-                'etat' => 'SUCCES', 'description' => $nombreDestinataires > 1 ? 'Transfert multiple' : 'Transfert',
+                'etat' => 'SUCCES', 'description' => $nombreDestinataires > 1 ? 'Transfert multiple' : ($transfert['remisePromotion'] > 0 ? 'Transfert — promotion -10 % sur frais' : 'Transfert'),
             ]);
 
             if (!$operationCreee || !$this->clientModel->crediter((int) $destinataire['idClient'], $transfert['montantPart'])) {
