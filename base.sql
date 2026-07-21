@@ -98,28 +98,9 @@ CREATE TABLE configurations (
     valeur TEXT NOT NULL
 );
 
--- Les soldes sont mis à jour par ClientController dans la même transaction
--- que l'écriture de l'opération. Aucun déclencheur n'est nécessaire.
-
-CREATE VIEW vue_gains_frais AS
-SELECT
-    operateurs.idOperateur,
-    operateurs.nom AS operateur,
-    typeOperations.nom AS typeOperation,
-    COUNT(operations.idOperation) AS nombreOperations,
-    COALESCE(SUM(operations.frais), 0) AS totalFrais
-FROM operateurs
-LEFT JOIN prefixes
-    ON prefixes.idOperateur = operateurs.idOperateur
-LEFT JOIN clients
-    ON SUBSTR(clients.telephone, 1, 3) = prefixes.prefixe
-LEFT JOIN operations
-    ON operations.expediteur = clients.idClient
-LEFT JOIN typeOperations
-    ON operations.idTypeOperation = typeOperations.idTypeOperation
-WHERE typeOperations.nom IN ('RETRAIT', 'TRANSFERT')
-GROUP BY operateurs.idOperateur, operateurs.nom, typeOperations.idTypeOperation, typeOperations.nom;
-
+-- ======================================
+-- VUE : Situation des comptes clients
+-- ======================================
 CREATE VIEW vue_comptes_clients AS
 SELECT
     operateurs.idOperateur,
@@ -137,7 +118,47 @@ JOIN clients
 LEFT JOIN operations
     ON operations.expediteur = clients.idClient
     OR operations.destinataire = clients.idClient
-GROUP BY operateurs.idOperateur, operateurs.nom, clients.idClient, clients.nom, clients.telephone, clients.solde;
+GROUP BY
+    operateurs.idOperateur,
+    operateurs.nom,
+    clients.idClient,
+    clients.nom,
+    clients.telephone,
+    clients.solde;
+
+-- ======================================
+-- VUE : Gains via les frais
+-- ======================================
+CREATE VIEW vue_gains_frais AS
+SELECT
+    operateurs.idOperateur,
+    operateurs.nom AS operateur,
+    typeOperations.nom AS typeOperation,
+    COUNT(operations.idOperation) AS nombreOperations,
+    COALESCE(SUM(operations.frais), 0) AS totalFrais
+FROM operateurs
+LEFT JOIN prefixes
+    ON prefixes.idOperateur = operateurs.idOperateur
+LEFT JOIN clients
+    ON SUBSTR(clients.telephone, 1, 3) = prefixes.prefixe
+LEFT JOIN operations
+    ON operations.expediteur = clients.idClient
+LEFT JOIN typeOperations
+    ON operations.idTypeOperation = typeOperations.idTypeOperation
+WHERE typeOperations.nom IN ('RETRAIT', 'TRANSFERT')
+GROUP BY
+    operateurs.idOperateur,
+    operateurs.nom,
+    typeOperations.idTypeOperation,
+    typeOperations.nom;
+
+-- ======================================
+-- TABLE : CONFIGURATIONS
+-- ======================================
+CREATE TABLE configurations (
+    cle TEXT PRIMARY KEY,
+    valeur TEXT NOT NULL
+);
 
 -- ============================================
 -- Script de données de test
