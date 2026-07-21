@@ -74,11 +74,7 @@
                                                 <?= (int)$operateur['nombrePrefixes'] ?>
                                                 préfixe(s)
                                             </span>
-                                        </div>
-
-                                        <span class="badge text-bg-primary">
-                                            MM
-                                        </span>
+                                        </div>    
 
                                     </div>
 
