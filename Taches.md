@@ -34,6 +34,7 @@
 - [ ] Situation gain via les différents frais” , séparer opérateur et autres opérateurs
 
 
+
 ### ETU004059
 - [ ] Situation des montants à envoyer à chaque opérateur
 - [ ] Option inclure frais de retrait lors de l’envoi
