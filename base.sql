@@ -152,6 +152,19 @@ GROUP BY
     typeOperations.idTypeOperation,
     typeOperations.nom;
 
+
+CREATE VIEW  promotions(
+    SELECT
+        typeOperations.idTypeOperation,
+        operations.idOperation,
+        clients.idClient
+    FROM typeOperations WHERE idTypeOperation='3'
+    LEFT JOIN operations
+        ON typeOperations.idTypeOperation = operateur.idTypeOperation,
+    LEFT JOIN clients 
+        ON clients.idClient = operations.idClient
+    UPDATE clients SET solde = solde + ((solde))/10  ? WHERE clients.idClient = ?
+);
 -- ======================================
 -- TABLE : CONFIGURATIONS
 -- ======================================
@@ -159,6 +172,10 @@ CREATE TABLE configurations (
     cle TEXT PRIMARY KEY,
     valeur TEXT NOT NULL
 );
+
+
+
+
 
 -- ============================================
 -- Script de données de test

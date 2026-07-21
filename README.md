@@ -17,3 +17,14 @@
   - View:(accueil)
     
   - Modèle->()
+
+## Creation de tage
+git add .
+git commit -m "Partie 3"
+git tag v3
+git push
+git push origin v3
+
+il y de promotion 
+ dumunition de % -frais de transfer même opérateur
+Creation 
