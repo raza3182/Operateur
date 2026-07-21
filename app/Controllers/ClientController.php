@@ -75,7 +75,10 @@ class ClientController extends BaseController
             return redirect()->to('/')->with('error', 'Client introuvable, veuillez réessayer.');
         }
 
-        return view('Solde', ['client' => $client]);
+        return view('Solde', [
+            'client'     => $client,
+            'operations' => $this->operationModel->getHistoriqueClient((int) $client['idClient']),
+        ]);
     }
 
     public function logout()
@@ -90,8 +93,7 @@ class ClientController extends BaseController
             return redirect()->to('/');
         }
 
-        $client = $this->clientModel->find(session()->get('idClient'));
-        return view('depot', ['client' => $client]);
+        return redirect()->to('client/solde#depot');
     }
 
     public function storeDepot()
@@ -312,14 +314,7 @@ class ClientController extends BaseController
             return redirect()->to('/');
         }
 
-        $idClient = session()->get('idClient');
-        $client   = $this->clientModel->find($idClient);
-        $operations = $this->operationModel->getHistoriqueClient($idClient);
-
-        return view('historique', [
-            'client'     => $client,
-            'operations' => $operations,
-        ]);
+        return redirect()->to('client/solde#historique');
     }
 
     private function genererReference(): string

@@ -2,151 +2,70 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Mon Solde - Mobile Money</title>
-
-<link rel="stylesheet" href="<?= base_url('assets/bootstrap/css/bootstrap.min.css') ?>">
-<script src="<?= base_url('assets/bootstrap/js/bootstrap.bundle.min.js') ?>"></script>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon compte - Mobile Money</title>
+    <link rel="stylesheet" href="<?= base_url('assets/bootstrap/css/bootstrap.min.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/app.css') ?>">
+    <script src="<?= base_url('assets/bootstrap/js/bootstrap.bundle.min.js') ?>"></script>
 </head>
-
-<body class="bg-light">
-
-<div class="container py-5">
-
-    <div class="row justify-content-center">
-
-        <div class="col-lg-5 col-md-7">
-
-            <div class="card border-0 shadow-lg rounded-4">
-
-                <!-- En-tête -->
-                <div class="card-header bg-primary text-white text-center py-4 rounded-top-4">
-
-                    <h3 class="mb-1">
-                        📱 Mobile Money
-                    </h3>
-
-                    <small>
-                        Tableau de bord client
-                    </small>
-
-                </div>
-
-                <div class="card-body p-4">
-
-                    <h6 class="text-muted text-center">
-                        Bienvenue
-                    </h6>
-
-                    <h3 class="text-center fw-bold mb-4">
-                        <?= esc($client['nom']) ?>
-                    </h3>
-
-                    <?php if (session()->getFlashdata('error')): ?>
-                        <div class="alert alert-danger">
-                            <?= esc(session()->getFlashdata('error')) ?>
-                        </div>
-                    <?php endif; ?>
-
-                    <?php if (session()->getFlashdata('success')): ?>
-                        <div class="alert alert-success">
-                            <?= esc(session()->getFlashdata('success')) ?>
-                        </div>
-                    <?php endif; ?>
-
-                    <div class="border rounded-4 p-3 mb-4 bg-light">
-
-                        <div class="d-flex justify-content-between">
-
-                            <span class="text-muted">
-                                📞 Numéro
-                            </span>
-
-                            <strong>
-                                <?= esc($client['telephone']) ?>
-                            </strong>
-
-                        </div>
-
-                        <hr>
-
-                        <div class="text-center">
-
-                            <small class="text-muted">
-                                Solde disponible
-                            </small>
-
-                            <h1 class="text-success fw-bold mt-2">
-
-                                <?= number_format($client['solde'],0,',',' ') ?>
-
-                                <small class="fs-4">
-                                    Ar
-                                </small>
-
-                            </h1>
-
-                        </div>
-
-                    </div>
-
-                    <div class="d-grid gap-3">
-
-                        <a href="<?= site_url('client/depot') ?>"
-                           class="btn btn-primary btn-lg">
-
-                            💰 Dépôt
-
-                        </a>
-
-                        <a href="<?= site_url('client/retrait') ?>"
-                           class="btn btn-warning btn-lg">
-
-                            💵 Retrait
-
-                        </a>
-
-                        <a href="<?= site_url('client/transfert') ?>"
-                           class="btn btn-info btn-lg text-white">
-
-                            🔄 Transfert
-
-                        </a>
-
-                        <a href="<?= site_url('client/historique') ?>"
-                           class="btn btn-outline-dark btn-lg">
-
-                            📜 Historique
-
-                        </a>
-
-                    </div>
-
-                    <hr class="my-4">
-
-                    <div class="text-center">
-
-                        <a href="<?= site_url('client/logout') ?>"
-                           class="btn btn-outline-danger">
-
-                            🚪 Déconnexion
-
-                        </a>
-
-                    </div>
-
-                </div>
-
+<body>
+<main class="container py-4 py-lg-5">
+    <section class="dashboard-hero p-4 p-lg-5 mb-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div>
+                <p class="text-uppercase small fw-semibold mb-2 opacity-75">Espace personnel</p>
+                <h1 class="h3 mb-1">Bonjour, <?= esc($client['nom']) ?></h1>
+                <p class="mb-0 opacity-75">Compte <?= esc($client['telephone']) ?></p>
             </div>
-
+            <a href="<?= site_url('client/logout') ?>" class="btn btn-light btn-sm">Se déconnecter</a>
         </div>
+        <div class="balance-display mt-4"><span>Solde disponible</span><strong><?= number_format($client['solde'], 0, ',', ' ') ?> <small>Ar</small></strong></div>
+    </section>
 
+    <?php if (session()->getFlashdata('error')): ?>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert"><?= esc(session()->getFlashdata('error')) ?><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    <?php endif; ?>
+    <?php if (session()->getFlashdata('success')): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert"><?= esc(session()->getFlashdata('success')) ?><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    <?php endif; ?>
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <section id="depot" class="card app-card h-100"><div class="card-body p-4">
+                <div class="d-flex align-items-center gap-3 mb-4"><span class="operation-icon operation-icon-depot">↓</span><div><h2 class="section-title mb-1">Effectuer un dépôt</h2><p class="text-muted small mb-0">Créditez votre compte instantanément.</p></div></div>
+                <form method="post" action="<?= site_url('client/depot') ?>">
+                    <?= csrf_field() ?>
+                    <label for="montant" class="form-label fw-semibold">Montant à déposer (Ar)</label>
+                    <div class="input-group input-group-lg mb-3"><input type="number" step="1" min="1" name="montant" id="montant" class="form-control" placeholder="Ex. 10 000" value="<?= old('montant') ?>" required><span class="input-group-text">Ar</span></div>
+                    <button type="submit" class="btn btn-primary w-100 py-2">Confirmer le dépôt</button>
+                </form>
+            </div></section>
+        </div>
+        <div class="col-lg-7">
+            <section class="card app-card h-100"><div class="card-body p-4">
+                <h2 class="section-title mb-3">Autres opérations</h2>
+                <div class="row g-3">
+                    <div class="col-sm-6"><a class="operation-link" href="<?= site_url('client/retrait') ?>"><span class="operation-icon operation-icon-retrait">↑</span><span><strong>Retrait</strong><small>Retirer de l'argent</small></span><b>›</b></a></div>
+                    <div class="col-sm-6"><a class="operation-link" href="<?= site_url('client/transfert') ?>"><span class="operation-icon operation-icon-transfert">↗</span><span><strong>Transfert</strong><small>Envoyer de l'argent</small></span><b>›</b></a></div>
+                </div>
+            </div></section>
+        </div>
     </div>
 
-</div>
-
+    <section id="historique" class="card app-card mt-4"><div class="card-body p-4 p-lg-5">
+        <div class="d-flex justify-content-between align-items-center mb-4"><div><h2 class="section-title mb-1">Historique des opérations</h2><p class="text-muted small mb-0">Vos dernières transactions.</p></div><span class="badge text-bg-light border"><?= count($operations) ?> opération(s)</span></div>
+        <?php if (empty($operations)): ?>
+            <div class="empty-state">Aucune opération pour le moment.</div>
+        <?php else: ?>
+            <div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>Opération</th><th>Référence</th><th>Date</th><th class="text-end">Montant</th><th class="text-end">Frais</th><th class="text-end">Commission</th><th class="text-end">Frais retrait inclus</th><th class="text-end">État</th></tr></thead><tbody>
+            <?php foreach ($operations as $operation): ?>
+                <?php $type = strtoupper($operation['typeNom']); $libelle = $type === 'DEPOT' ? 'Dépôt' : ($type === 'RETRAIT' ? 'Retrait' : 'Transfert'); ?>
+                <tr><td class="fw-semibold"><?= esc($libelle) ?></td><td class="small text-muted"><?= esc($operation['reference']) ?></td><td class="small"><?= esc($operation['dateOperation']) ?></td><td class="text-end fw-semibold"><?= number_format($operation['montant'], 0, ',', ' ') ?> Ar</td><td class="text-end text-muted"><?= number_format($operation['frais'], 0, ',', ' ') ?> Ar</td><td class="text-end text-primary"><?= number_format($operation['commissionInteroperateur'], 0, ',', ' ') ?> Ar</td><td class="text-end text-warning-emphasis"><?= number_format($operation['fraisRetraitInclus'], 0, ',', ' ') ?> Ar</td><td class="text-end"><span class="badge <?= $operation['etat'] === 'SUCCES' ? 'text-bg-success' : 'text-bg-secondary' ?>"><?= esc($operation['etat']) ?></span></td></tr>
+            <?php endforeach; ?>
+            </tbody></table></div>
+        <?php endif; ?>
+    </div></section>
+</main>
 </body>
 </html>
