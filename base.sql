@@ -98,39 +98,8 @@ CREATE TABLE configurations (
     valeur TEXT NOT NULL
 );
 
-CREATE TRIGGER IF NOT EXISTS trg_operations_depot_after_insert
-AFTER INSERT ON operations
-FOR EACH ROW
-WHEN NEW.idTypeOperation = 1
-BEGIN
-    UPDATE clients
-    SET solde = solde + NEW.montant
-    WHERE idClient = NEW.destinataire;
-END;
-
-CREATE TRIGGER IF NOT EXISTS trg_operations_retrait_after_insert
-AFTER INSERT ON operations
-FOR EACH ROW
-WHEN NEW.idTypeOperation = 2
-BEGIN
-    UPDATE clients
-    SET solde = solde - (NEW.montant + NEW.frais)
-    WHERE idClient = NEW.expediteur;
-END;
-
-CREATE TRIGGER IF NOT EXISTS trg_operations_transfert_after_insert
-AFTER INSERT ON operations
-FOR EACH ROW
-WHEN NEW.idTypeOperation = 3
-BEGIN
-    UPDATE clients
-    SET solde = solde - (NEW.montant + NEW.frais + NEW.commissionInteroperateur + NEW.fraisRetraitInclus)
-    WHERE idClient = NEW.expediteur;
-
-    UPDATE clients
-    SET solde = solde + NEW.montant
-    WHERE idClient = NEW.destinataire;
-END;
+-- Les soldes sont mis à jour par ClientController dans la même transaction
+-- que l'écriture de l'opération. Aucun déclencheur n'est nécessaire.
 
 CREATE VIEW vue_gains_frais AS
 SELECT

@@ -115,7 +115,7 @@ class ClientController extends BaseController
         $db = db_connect();
         $db->transStart();
 
-        $this->operationModel->insert([
+        $operationCreee = $this->operationModel->insert([
             'reference'       => $this->genererReference(),
             'idTypeOperation' => self::TYPE_DEPOT,
             'expediteur'      => null,
@@ -125,6 +125,11 @@ class ClientController extends BaseController
             'etat'            => 'SUCCES',
             'description'     => 'Depot',
         ]);
+
+        if (!$operationCreee || !$this->clientModel->crediter((int) $idClient, $montant)) {
+            $db->transRollback();
+            return redirect()->back()->withInput()->with('error', 'Le depot a echoue.');
+        }
 
         $db->transComplete();
 
@@ -177,7 +182,7 @@ class ClientController extends BaseController
         $db = db_connect();
         $db->transStart();
 
-        $this->operationModel->insert([
+        $operationCreee = $this->operationModel->insert([
             'reference'       => $this->genererReference(),
             'idTypeOperation' => self::TYPE_RETRAIT,
             'expediteur'      => $idClient,
@@ -187,6 +192,11 @@ class ClientController extends BaseController
             'etat'            => 'SUCCES',
             'description'     => 'Retrait',
         ]);
+
+        if (!$operationCreee || !$this->clientModel->debiter((int) $idClient, $montant + $frais)) {
+            $db->transRollback();
+            return redirect()->back()->withInput()->with('error', 'Le retrait a echoue.');
+        }
 
         $db->transComplete();
 
@@ -271,7 +281,7 @@ class ClientController extends BaseController
         $db->transStart();
         foreach ($transferts as $transfert) {
             $destinataire = $this->clientModel->findOrCreate($transfert['telephoneDest']);
-            $this->operationModel->insert([
+            $operationCreee = $this->operationModel->insert([
                 'reference' => $this->genererReference(), 'idTypeOperation' => self::TYPE_TRANSFERT,
                 'expediteur' => $idClient, 'destinataire' => $destinataire['idClient'],
                 'montant' => $transfert['montantPart'], 'frais' => $transfert['fraisTransfert'],
@@ -279,6 +289,16 @@ class ClientController extends BaseController
                 'idOperateurSource' => $operateurSource['idOperateur'], 'idOperateurDestinataire' => $transfert['operateurDestinataire']['idOperateur'],
                 'etat' => 'SUCCES', 'description' => $nombreDestinataires > 1 ? 'Transfert multiple' : 'Transfert',
             ]);
+
+            if (!$operationCreee || !$this->clientModel->crediter((int) $destinataire['idClient'], $transfert['montantPart'])) {
+                $db->transRollback();
+                return redirect()->back()->withInput()->with('error', 'Le transfert a échoué.');
+            }
+        }
+
+        if (!$this->clientModel->debiter((int) $idClient, $totalADebiter)) {
+            $db->transRollback();
+            return redirect()->back()->withInput()->with('error', 'Solde insuffisant pour le montant et tous les frais.');
         }
         $db->transComplete();
         if (!$db->transStatus()) return redirect()->back()->withInput()->with('error', 'Le transfert a échoué.');

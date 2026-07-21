@@ -106,11 +106,14 @@ class ClientModel extends Model
      */
     public function crediter(int $idClient, float $montant): bool
     {
-        $client = $this->find($idClient);
-        if (!$client) return false;
+        if ($montant <= 0) {
+            return false;
+        }
 
-        $nouveauSolde = $client['solde'] + $montant;
-        return $this->update($idClient, ['solde' => $nouveauSolde]);
+        return $this->db->query(
+            'UPDATE clients SET solde = solde + ? WHERE idClient = ?',
+            [$montant, $idClient]
+        ) !== false && $this->db->affectedRows() === 1;
     }
 
     /**
@@ -119,14 +122,14 @@ class ClientModel extends Model
      */
     public function debiter(int $idClient, float $montant): bool
     {
-        $client = $this->find($idClient);
-        if (!$client) return false;
-
-        if ($client['solde'] < $montant) {
-            return false; // solde insuffisant
+        if ($montant <= 0) {
+            return false;
         }
 
-        $nouveauSolde = $client['solde'] - $montant;
-        return $this->update($idClient, ['solde' => $nouveauSolde]);
+        // La condition sur le solde rend le débit atomique et évite un solde négatif.
+        return $this->db->query(
+            'UPDATE clients SET solde = solde - ? WHERE idClient = ? AND solde >= ?',
+            [$montant, $idClient, $montant]
+        ) !== false && $this->db->affectedRows() === 1;
     }
 }
