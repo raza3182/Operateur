@@ -102,7 +102,7 @@ class ClientModel extends Model
     }
 
     /**
-     * Crédite le solde du client (dépôt, ou réception de transfert).
+     * Fonction(dépôt, ou réception de transfert).
      */
     public function crediter(int $idClient, float $montant): bool
     {
