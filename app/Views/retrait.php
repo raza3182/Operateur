@@ -1,71 +1,156 @@
 <?php helper('form'); ?>
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Retrait - Mobile Money</title>
+
     <link rel="stylesheet" href="<?= base_url('assets/bootstrap/css/bootstrap.min.css') ?>">
     <script src="<?= base_url('assets/bootstrap/js/bootstrap.bundle.min.js') ?>"></script>
+
 </head>
+
 <body class="bg-light">
 
-<div class="container d-flex justify-content-center align-items-center" style="min-height: 100vh;">
-    <div class="card shadow-sm" style="width: 100%; max-width: 400px;">
-        <div class="card-body p-4">
+<div class="container py-5">
 
-            <h4 class="text-center mb-4">Retrait</h4>
+    <div class="row justify-content-center">
 
-            <p class="text-muted mb-1">Compte</p>
-            <p class="fw-bold mb-3"><?= esc($client['telephone']) ?></p>
+        <div class="col-lg-5 col-md-7">
 
-            <div class="border rounded p-2 mb-4 bg-white text-center">
-                <small class="text-muted">Solde actuel</small>
-                <h5 class="text-success mb-0">
-                    <?= number_format($client['solde'], 0, ',', ' ') ?> Ar
-                </h5>
+            <div class="card border-0 shadow-lg rounded-4">
+                <!-- En-tête -->
+                <div class="card-header bg-primary text-white text-center py-4 rounded-top-4">
+                    <h2 class="mb-1">
+                        💵 Retrait d'argent
+                    </h2>
+                </div>
+
+                <div class="card-body p-4">
+
+                    <div class="text-center mb-4">
+
+                        <h6 class="text-muted">
+                            Compte
+                        </h6>
+
+                        <h4 class="fw-bold">
+                            <?= esc($client['telephone']) ?>
+                        </h4>
+
+                    </div>
+
+                    <!-- Solde -->
+                    <div class="bg-light border rounded-4 p-4 mb-4 text-center">
+
+                        <small class="text-muted">
+                            Solde disponible
+                        </small>
+
+                        <h1 class="text-success fw-bold mt-2">
+
+                            <?= number_format($client['solde'], 0, ',', ' ') ?>
+
+                            <small class="fs-4">
+                                Ar
+                            </small>
+
+                        </h1>
+
+                    </div>
+
+                    <!-- Messages -->
+                    <?php if (session()->getFlashdata('error')): ?>
+
+                        <div class="alert alert-danger alert-dismissible fade show">
+
+                            <?= esc(session()->getFlashdata('error')) ?>
+
+                            <button type="button"
+                                    class="btn-close"
+                                    data-bs-dismiss="alert"></button>
+
+                        </div>
+
+                    <?php endif; ?>
+
+                    <?php if (session()->getFlashdata('success')): ?>
+
+                        <div class="alert alert-success alert-dismissible fade show">
+
+                            <?= esc(session()->getFlashdata('success')) ?>
+
+                            <button type="button"
+                                    class="btn-close"
+                                    data-bs-dismiss="alert"></button>
+
+                        </div>
+
+                    <?php endif; ?>
+
+                    <!-- Formulaire -->
+                    <form method="post"
+                          action="<?= site_url('client/retrait') ?>">
+
+                        <?= csrf_field() ?>
+
+                        <div class="mb-4">
+
+                            <label for="montant"
+                                   class="form-label fw-bold">
+
+                                💰 Montant
+
+                            </label>
+
+                            <input
+                                type="number"
+                                id="montant"
+                                name="montant"
+                                class="form-control form-control-lg"
+                                placeholder="Ex : 10 000"
+                                min="1"
+                                step="1"
+                                value="<?= old('montant') ?>"
+                                required>
+
+                        </div>
+
+                        <!-- Boutons -->
+                        <div class="d-grid gap-3">
+
+                            <button type="submit"
+                                    class="btn btn-warning btn-lg">
+
+                                💵 Confirmer
+
+                            </button>
+
+                            <a href="<?= site_url('client/solde') ?>"
+                               class="btn btn-outline-secondary btn-lg">
+
+                                ⬅ Retour au tableau de bord
+
+                            </a>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
             </div>
 
-            <?php if (session()->getFlashdata('error')): ?>
-                <div class="alert alert-danger">
-                    <?= session()->getFlashdata('error') ?>
-                </div>
-            <?php endif; ?>
-
-            <?php if (session()->getFlashdata('success')): ?>
-                <div class="alert alert-success">
-                    <?= session()->getFlashdata('success') ?>
-                </div>
-            <?php endif; ?>
-
-            <form method="post" action="<?= site_url('client/retrait') ?>">
-                <?= csrf_field() ?>
-
-                <div class="mb-3">
-                    <label for="montant" class="form-label">Montant à retirer (Ar)</label>
-                    <input
-                        type="number"
-                        step="1"
-                        min="1"
-                        name="montant"
-                        id="montant"
-                        class="form-control"
-                        placeholder="Ex: 10000"
-                        value="<?= old('montant') ?>"
-                        required
-                    >
-                    <div class="form-text">Des frais seront appliqués selon le montant retiré.</div>
-                </div>
-
-                <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-warning">Confirmer le retrait</button>
-                    <a href="<?= site_url('client/solde') ?>" class="btn btn-outline-secondary">Annuler</a>
-                </div>
-            </form>
-
         </div>
+
     </div>
+
 </div>
 
 </body>
+
 </html>
